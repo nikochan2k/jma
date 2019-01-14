@@ -1,0 +1,13 @@
+{
+  "name": "jma",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Yoshihiro Seki",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/puppeteer": "^1.11.1"
+  }
+}
