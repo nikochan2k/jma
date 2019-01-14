@@ -132,8 +132,8 @@ const parseAmedas = () => {
   return rows;
 }
 
-const prec_no = "54"; // 46;
-const block_no = "0529" // 47670;
+const prec_no = "46"; // "46"; "54";
+const block_no = "47670" // "47670"; "0529";
 const year = "2018";
 const month = "12";
 const day = "01";
@@ -148,6 +148,9 @@ const kansokujo = 10000 <= parseInt(block_no);
     `http://www.data.jma.go.jp/obd/stats/etrn/view/hourly_a1.php?prec_no=${prec_no}&block_no=${block_no}&year=${year}&month=${month}&day=${day}`;
   await page.goto(url, { waitUntil: "domcontentloaded" });
   const data = kansokujo ? await page.evaluate(parseKansokujo) : await page.evaluate(parseAmedas);
-  console.dir(data);
+  (<Array<Object>>data).forEach((cols) => {
+    const row = (<Array<Object>>cols).join(",");
+    console.log(row);
+  })
   await browser.close();
 })();
