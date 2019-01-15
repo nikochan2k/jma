@@ -1,5 +1,26 @@
 import puppeteer from "puppeteer";
 
+if (process.argv.length < 4) {
+  console.log("usage: node app.js firstDate lastDate")
+  process.exit(1);
+}
+
+const first = new Date(process.argv[2]);
+if (isNaN(first.getTime())) {
+  console.log("firstDate is not date: " + process.argv[2])
+  process.exit(1);
+}
+const last = new Date(process.argv[3]);
+if (isNaN(last.getTime())) {
+  console.log("firstDate is not date: " + process.argv[3])
+  process.exit(1);
+}
+
+if(last.getTime() < first.getTime()){
+  console.log("firstDate should be earlier than lastDate");
+  process.exit(1);
+}
+
 const parseKansokujo = () => {
   try {
     const toInt = (td: HTMLElement) => {
@@ -134,23 +155,26 @@ const parseAmedas = () => {
 
 const prec_no = "46"; // "46"; "54";
 const block_no = "47670" // "47670"; "0529";
-const year = "2018";
-const month = "12";
-const day = "01";
 const kansokujo = 10000 <= parseInt(block_no);
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
-  const url = kansokujo ?
-    `http://www.data.jma.go.jp/obd/stats/etrn/view/hourly_s1.php?prec_no=${prec_no}&block_no=${block_no}&year=${year}&month=${month}&day=${day}&view=p1`
-    :
-    `http://www.data.jma.go.jp/obd/stats/etrn/view/hourly_a1.php?prec_no=${prec_no}&block_no=${block_no}&year=${year}&month=${month}&day=${day}`;
-  await page.goto(url, { waitUntil: "domcontentloaded" });
-  const data = kansokujo ? await page.evaluate(parseKansokujo) : await page.evaluate(parseAmedas);
-  (<Array<Object>>data).forEach((cols) => {
-    const row = (<Array<Object>>cols).join(",");
-    console.log(row);
-  })
+
+  for (let date = first; date.getTime() <= last.getTime();) {
+    const url = kansokujo ?
+      `http://www.data.jma.go.jp/obd/stats/etrn/view/hourly_s1.php?prec_no=${prec_no}&block_no=${block_no}&year=${date.getFullYear()}&month=${date.getMonth() + 1}&day=${date.getDate()}&view=p1`
+      :
+      `http://www.data.jma.go.jp/obd/stats/etrn/view/hourly_a1.php?prec_no=${prec_no}&block_no=${block_no}&year=${date.getFullYear()}&month=${date.getMonth() + 1}&day=${date.getDate()}&view=p1`;
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    const data = kansokujo ? await page.evaluate(parseKansokujo) : await page.evaluate(parseAmedas);
+    (<Object[][]>data).forEach((cols) => {
+      cols[0] = new Date(date.getFullYear(), date.getMonth(), date.getDate(), <number>cols[0]).toISOString();
+      const row = cols.join(",");
+      console.log(row);
+    })
+
+    date = new Date(date.getTime() + 86400000);
+  }
   await browser.close();
 })();
